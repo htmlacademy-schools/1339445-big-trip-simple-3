@@ -145,6 +145,8 @@ class TripEventsFormView extends BaseView {
   constructor(tripEvent) {
     super();
     this.tripEvent = tripEvent;
+
+    this.getElement().querySelector('.event__save-btn').addEventListener('submit', this.onSubmit)
   }
 
   getTemplate() {
