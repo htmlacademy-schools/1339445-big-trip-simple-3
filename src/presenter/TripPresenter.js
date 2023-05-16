@@ -10,16 +10,17 @@ class TripPresenter {
   init(container, tripModel) {
     this.container = container;
     this.tripModel = tripModel;
-    this.tripEvents = tripModel.getTripEvents();
-    console.log('Trip Events: ', this.tripEvents);
+    this.tripEventsData = tripModel.getTripEvents();
+    console.log('Trip Events: ', this.tripEventsData);
 
     render(new TripEventsSortingView(), this.container);
     render(this.tripListComponent, this.container);
-    this.tripListComponent.addComponent(new TripEventsFormView(this.tripEvents[0]));
 
-    for (let i = 1; i < this.tripEvents.length; i++) {
-      const tripEvent = this.tripEvents[i];
-      this.tripListComponent.addComponent(new TripEventView(tripEvent));
+    for (let i = 0; i < this.tripEventsData.length; i++) {
+      const tripData = this.tripEventsData[i];
+      const tripEvent = new TripEventView(tripData)
+      const tripForm = new TripEventsFormView(tripData);
+      this.tripListComponent.addComponent(tripEvent);
     }
   }
 }

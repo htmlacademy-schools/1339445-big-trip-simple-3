@@ -74,10 +74,17 @@ class TripEventView extends BaseView {
   constructor(tripEvent) {
     super();
     this.tripEvent = tripEvent;
+
+    this._arrow = this.getElement().querySelector('.event__rollup-btn');
+    this._arrow.addEventListener('click', this.onArrowClick);
   }
 
   getTemplate() {
     return createTripEventTemplate(this.tripEvent);
+  }
+
+  onArrowClick(evt) {
+    console.log('clicked');
   }
 }
 

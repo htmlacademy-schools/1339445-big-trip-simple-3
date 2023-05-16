@@ -152,6 +152,11 @@ class TripEventsFormView extends BaseView {
   getTemplate() {
     return createTripEventsFormTemplate(this.tripEvent);
   }
+
+  onSubmit(evt) {
+    evt.preventDefault();
+    console.log('submit');
+  }
 }
 
 export default TripEventsFormView;
