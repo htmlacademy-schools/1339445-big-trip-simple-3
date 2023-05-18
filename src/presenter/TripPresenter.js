@@ -18,8 +18,7 @@ class TripPresenter {
 
     for (let i = 0; i < this.tripEventsData.length; i++) {
       const tripData = this.tripEventsData[i];
-      const tripEvent = new TripEventView(tripData)
-      const tripForm = new TripEventsFormView(tripData);
+      const tripEvent = new TripEventView(tripData);
       this.tripListComponent.addComponent(tripEvent);
     }
   }

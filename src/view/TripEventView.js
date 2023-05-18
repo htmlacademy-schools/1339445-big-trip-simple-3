@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import BaseView from './BaseView';
+import TripEventsFormView from '../view/TripEventsFormView';
 import { capitalize } from '../utils';
 import { destinations, offers } from '../mock/trip-event';
 
@@ -71,20 +72,30 @@ const createTripEventTemplate = (tripEvent) => {
 };
 
 class TripEventView extends BaseView {
-  constructor(tripEvent) {
+  constructor(tripData) {
     super();
-    this.tripEvent = tripEvent;
+    this.tripData = tripData;
+    this.form = null;
 
     this._arrow = this.getElement().querySelector('.event__rollup-btn');
-    this._arrow.addEventListener('click', this.onArrowClick);
+    this._arrow.addEventListener('click', (evt) => this.onArrowClick(evt));
   }
 
   getTemplate() {
-    return createTripEventTemplate(this.tripEvent);
+    return createTripEventTemplate(this.tripData);
+  }
+
+  getForm() {
+    if (!this.form) {
+      this.form = new TripEventsFormView(this.tripData);
+      this.form.setTripEvent(this);
+    }
+    return this.form;
   }
 
   onArrowClick(evt) {
     console.log('clicked');
+    this.element.replaceWith(this.getForm().getElement());
   }
 }
 

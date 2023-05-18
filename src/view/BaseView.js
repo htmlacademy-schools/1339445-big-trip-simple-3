@@ -1,6 +1,10 @@
 import {createElement} from '../render.js';
 
 class BaseView {
+  constructor() {
+    this.element = null;
+  }
+
   getTemplate() {
     throw new Error('Not Implemented');
   }
@@ -14,6 +18,10 @@ class BaseView {
 
   removeElement() {
     this.element = null;
+  }
+
+  isActive() {
+    return this.element && this.element.isConnected
   }
 }
 
