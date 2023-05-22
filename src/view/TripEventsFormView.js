@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import BaseView from './BaseView';
+import TripEventView from '../view/TripEventView';
 import { destinations, generateOffers, offers } from '../mock/trip-event';
 import { TRIP_EVENT_TYPES } from '../const';
 import { capitalize } from '../utils';
@@ -142,13 +143,55 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
 };
 
 class TripEventsFormView extends BaseView {
-  constructor(tripEvent) {
+  constructor(tripData) {
     super();
-    this.tripEvent = tripEvent;
+    this.tripData = tripData;
+    this.tripEvent = null;
+
+    this.getElement().addEventListener('submit', (evt) => this.onSubmit(evt));
+    this.getElement().querySelector('.event__reset-btn').addEventListener('click', () => this.cancelForm());
+    // this._escListener = () => {};
+
+    document.addEventListener('keydown', (evt) => {
+      if (evt.key === 'Escape') {
+        if (this.isActive()) {
+          this.element.replaceWith(this.getTripEvent().getElement());
+        }
+
+      }
+    });
   }
 
   getTemplate() {
-    return createTripEventsFormTemplate(this.tripEvent);
+    return createTripEventsFormTemplate(this.tripData);
+  }
+
+  setTripEvent(tripEvent) {
+    this.tripEvent = tripEvent;
+  }
+
+  getTripEvent() {
+    if (!this.tripEvent) {
+      this.tripEvent = new TripEventView(this.tripData);
+    }
+    return this.tripEvent;
+  }
+
+  onSubmit(evt) {
+    evt.preventDefault();
+    console.log('submit');
+  }
+
+  _closeForm() {
+    if (this.isActive()) {
+      this.element.replaceWith(this.getTripEvent().getElement());
+    }
+  }
+
+  cancelForm() {
+    this._closeForm();
+    this.element.reset();
+    console.log('cancel');
   }
 }
 

@@ -2,6 +2,11 @@ import { TRIP_EVENT_TYPES } from '../const';
 import { getLoremIpsum, getRandomInt, getRandomElement, sample, getTrueWithChance } from '../utils';
 import dayjs from 'dayjs';
 
+// !!
+// В этом файле многие некоторые ключи объектов названы не в стиле camelCase.
+// Это было сделано намеренно для поддержания соответствия именования ключей
+// как в тз
+
 const generatePictures = () => {
   const picturesNumber = getRandomInt(1, 6);
   const pictures = new Array(picturesNumber);
