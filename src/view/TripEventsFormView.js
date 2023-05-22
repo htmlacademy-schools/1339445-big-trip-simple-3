@@ -150,7 +150,7 @@ class TripEventsFormView extends BaseView {
 
     this.getElement().addEventListener('submit', (evt) => this.onSubmit(evt));
     this.getElement().querySelector('.event__reset-btn').addEventListener('click', () => this.cancelForm());
-    this._esc_listener = () => {}
+    // this._escListener = () => {};
 
     document.addEventListener('keydown', (evt) => {
       if (evt.key === 'Escape') {

@@ -21,7 +21,7 @@ class BaseView {
   }
 
   isActive() {
-    return this.element && this.element.isConnected
+    return this.element && this.element.isConnected;
   }
 }
 
