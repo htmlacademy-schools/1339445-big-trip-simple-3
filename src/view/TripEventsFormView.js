@@ -1,11 +1,23 @@
 import dayjs from 'dayjs';
-import BaseView from './BaseView';
 import TripEventView from '../view/TripEventView';
 import { destinations, generateOffers, offers } from '../mock/trip-event';
 import { TRIP_EVENT_TYPES } from '../const';
 import { capitalize } from '../utils';
+import AbstractView from '../framework/view/abstract-view';
+
+const FormMode = {
+  NEW: 'NEW',
+  EDIT: 'EDIT',
+};
 
 const createTripEventsFormTemplate = (tripEvent = null) => {
+  let mode;
+  if (tripEvent) {
+    mode = FormMode.EDIT;
+  } else {
+    mode = FormMode.NEW;
+  }
+
   if (!tripEvent) {
     const date = dayjs().startOf('day').toISOString();
     const defaultType = 'flight;';
@@ -19,6 +31,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
       offers: generateOffers(),
     };
   }
+
   const dateFrom = dayjs(tripEvent.date_from);
   const dateTo = dayjs(tripEvent.date_to);
   const destination = destinations[tripEvent.destination];
@@ -38,10 +51,12 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
         </div>
       `)
     .join('');
+
   const listDestinations = () => Object.values(destinations).map((d) => `
         <option value="${d.name}"></option>
       `)
     .join('');
+
   const listOffers = () => {
     const resultList = [];
     for (const [offerId, isActive] of Object.entries(tripEvent.offers)) {
@@ -61,10 +76,26 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
     }
     return resultList.join('');
   };
+
   const listDestinationPictures = () => destination.pictures.map((picture) => `
         <img class="event__photo" src="${picture.src}" alt="${picture.description}">
       `)
     .join('');
+
+  const listControls = () => {
+    if (mode === FormMode.NEW) {
+      return `
+        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+        <button class="event__reset-btn" type="reset">Cancel</button>
+      `;
+    } else { // if (mode === FormMode.EDIT)
+      return `
+        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+        <button class="event__reset-btn" type="reset">Delete</button>
+        <button class="event__rollup-btn" type="button">
+      `;
+    }
+  };
 
   return `
     <form class="event event--edit" action="#" method="post">
@@ -116,8 +147,8 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
           >
         </div>
 
-        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">Cancel</button>
+        ${listControls()}
+
       </header>
       <section class="event__details">
         <section class="event__section  event__section--offers">
@@ -142,56 +173,106 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
   `;
 };
 
-class TripEventsFormView extends BaseView {
+class TripEventsFormView extends AbstractView {
+  #tripEvent = null;
+  _mode = FormMode.NEW;
+
   constructor(tripData) {
     super();
     this.tripData = tripData;
-    this.tripEvent = null;
 
-    this.getElement().addEventListener('submit', (evt) => this.onSubmit(evt));
-    this.getElement().querySelector('.event__reset-btn').addEventListener('click', () => this.cancelForm());
-    // this._escListener = () => {};
+    if (this.tripData) {
+      this._mode = FormMode.EDIT;
+    } else {
+      this._mode = FormMode.NEW;
+    }
+
+    // set listeners
+    this.setFormSubmitHandler(() => console.log('submit'));
+    if (this._mode === FormMode.NEW) {
+      this.setCancelButtonClickHandler(() => this.deleteForm());
+    } else { // if (this._mode === FormMode.EDIT)
+      this.setCancelButtonClickHandler(() => this.deleteTripEvent());
+      this.setArrowClickHandler(() => this.cancelForm());
+    }
 
     document.addEventListener('keydown', (evt) => {
       if (evt.key === 'Escape') {
         if (this.isActive()) {
-          this.element.replaceWith(this.getTripEvent().getElement());
+          this.cancelForm();
         }
-
       }
     });
   }
 
-  getTemplate() {
+  get template() {
     return createTripEventsFormTemplate(this.tripData);
   }
 
-  setTripEvent(tripEvent) {
-    this.tripEvent = tripEvent;
-  }
-
-  getTripEvent() {
-    if (!this.tripEvent) {
-      this.tripEvent = new TripEventView(this.tripData);
+  get tripEvent() {
+    if (!this.#tripEvent) {
+      this.#tripEvent = new TripEventView(this.tripData);
     }
-    return this.tripEvent;
+    return this.#tripEvent;
   }
 
-  onSubmit(evt) {
-    evt.preventDefault();
-    console.log('submit');
+  set tripEvent(newValue) {
+    this.#tripEvent = newValue;
   }
+
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.formSubmit();
+  };
+
+  setFormSubmitHandler = (callback) => {
+    this._callback.formSubmit = callback;
+    this.element.addEventListener('submit', this.#formSubmitHandler);
+  };
+
+  #cancelButtonHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.cancelButtonClick();
+  };
+
+  setCancelButtonClickHandler = (callback) => {
+    this._callback.cancelButtonClick = callback;
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#cancelButtonHandler);
+  };
+
+  #arrowClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.arrowClick();
+  };
+
+  setArrowClickHandler = (callback) => {
+    this._callback.arrowClick = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#arrowClickHandler);
+  };
 
   _closeForm() {
+    // close form and open TripEventView
     if (this.isActive()) {
-      this.element.replaceWith(this.getTripEvent().getElement());
+      this.element.replaceWith(this.tripEvent.element);
     }
   }
 
   cancelForm() {
+    // reset form and close it
     this._closeForm();
     this.element.reset();
-    console.log('cancel');
+    // console.log('cancel');
+  }
+
+  deleteForm() {
+    this.delete();
+    // console.log('delete form');
+  }
+
+  deleteTripEvent() {
+    this.#tripEvent.delete();
+    this.delete();
+    // console.log('delete tripEvent')
   }
 }
 
