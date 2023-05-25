@@ -30,9 +30,15 @@ export default class AbstractView {
   get element() {
     if (!this.#element) {
       this.#element = createElement(this.template);
+      this.afterCreateElement();
     }
 
     return this.#element;
+  }
+
+  /** Callback при создании нового элемента */
+  afterCreateElement() {
+    // pass
   }
 
   /**
@@ -44,9 +50,27 @@ export default class AbstractView {
     throw new Error('Abstract method not implemented: get template');
   }
 
-  /** Метод для удаления элемента */
+  /** Метод для обнуления элемента */
   removeElement() {
     this.#element = null;
+  }
+
+  /** Метод для удаления View, в том числе и со страницы */
+  delete() {
+    if (this.isActive()) {
+      this.#element.remove();
+      this.removeElement();
+    }
+  }
+
+  /** Проверка, что элемент существует и находится на странице */
+  isActive() {
+    return this.isElementExist() && this.#element.isConnected;
+  }
+
+  /** Проверка, что элемент существует */
+  isElementExist() {
+    return Boolean(this.#element);
   }
 
   /**

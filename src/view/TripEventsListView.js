@@ -1,4 +1,5 @@
-import { createElement, render } from '../render';
+import { createElement, render } from '../framework/render';
+import AbstractView from '../framework/view/abstract-view';
 import BaseView from './BaseView';
 
 const createTripEventsListTemplate = () => `
@@ -13,24 +14,31 @@ const createMessageTemplate = () => `
   <p class="trip-events__msg">Click New Event to create your first point</p>
 `;
 
-class TripEventsListView extends BaseView {
+class TripEventsListView extends AbstractView {
+  #tripFiltersForm = document.querySelector('.trip-filters');
+  _filterValue = this.#tripFiltersForm.querySelector('input[name="trip-filter"]:checked').value;
+
   constructor(tripEvents) {
     super();
-
     this.tripEvents = tripEvents || [];
-    this.filterValue = null;
 
-    const tripFiltersForm = document.querySelector('.trip-filters');
-    tripFiltersForm.addEventListener('change', (evt) => this._onFilterFormChange(evt));
-    this.filterValue = tripFiltersForm.querySelector('input[name="trip-filter"]:checked').value;
+    this.setFiltersFormChangeHandler((evt) => {
+      if (evt.target.name === 'trip-filter') {
+        this.filterValue = evt.target.value;
+        this.updateMessage();
+      }
+    });
   }
 
-  _onFilterFormChange(evt) {
-    if (evt.target.name === 'trip-filter') {
-      this.filterValue = evt.target.value;
-      this.updateMessage();
-    }
-  }
+  #filtersFormHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.filtersFormChange(evt);
+  };
+
+  setFiltersFormChangeHandler = (callback) => {
+    this._callback.filtersFormChange = callback;
+    this.#tripFiltersForm.addEventListener('change', this.#filtersFormHandler);
+  };
 
   initList() {
     if (!this.isEmpty()) {
@@ -42,19 +50,11 @@ class TripEventsListView extends BaseView {
     }
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-      this.initList();
-    }
-    return this.element;
-  }
-
   isEmpty() {
     return this.tripEvents.length === 0;
   }
 
-  getTemplate() {
+  get template() {
     if (this.isEmpty()) {
       return createMessageTemplate();
     } else {
@@ -62,12 +62,16 @@ class TripEventsListView extends BaseView {
     }
   }
 
+  afterCreateElement() {
+    this.initList();
+  }
+
   updateMessage() {
     if (this.isEmpty()) {
       let newText = 'Click New Event to create your first point'; // default value
-      if (this.filterValue === 'future') {
+      if (this._filterValue === 'future') {
         newText = 'There are no future events now';
-      } else if (this.filterValue === 'past') {
+      } else if (this._filterValue === 'past') {
         newText = 'There are no past events now';
       }
 
@@ -79,8 +83,8 @@ class TripEventsListView extends BaseView {
     // add new component to this View and show it
     this.tripEvents.push(component);
     if (this.isEmpty()) {
-      this.element = null;
-      this.getElement();
+      this.removeElement();
+      this.element;
     } else {
       this._appendComponent(component);
     }
@@ -90,7 +94,7 @@ class TripEventsListView extends BaseView {
     // makes this component visible on page
     const listElement = createElement(createElementWrapperTemplate());
     render(component, listElement);
-    this.getElement().append(listElement);
+    this.element.append(listElement);
   }
 }
 

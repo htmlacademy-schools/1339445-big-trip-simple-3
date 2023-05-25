@@ -1,6 +1,8 @@
+import AbstractView from '../framework/view/abstract-view.js';
 import {createElement} from '../render.js';
 
 class BaseView {
+  // у меня уже была реализована логика абстрактного
   constructor() {
     this.element = null;
   }

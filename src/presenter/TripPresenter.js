@@ -1,4 +1,4 @@
-import { render } from '../render';
+import { render } from '../framework/render';
 import TripEventsListView from '../view/TripEventsListView';
 import TripEventsSortingView from '../view/TripEventsSortingView';
 import TripEventView from '../view/TripEventView';
@@ -8,7 +8,7 @@ class TripPresenter {
     this.container = container;
     this.tripModel = tripModel;
     this.tripEventsData = tripModel.getTripEvents();
-    console.log('Trip Events: ', this.tripEventsData); // Debug information. Will be deleted soon
+    // console.log('Trip Events: ', this.tripEventsData); // Debug information
 
     const tripEvents = this.tripEventsData.map((tripData) => new TripEventView(tripData));
     this.tripListComponent = new TripEventsListView(tripEvents);

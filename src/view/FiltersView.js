@@ -1,3 +1,4 @@
+import AbstractView from '../framework/view/abstract-view';
 import BaseView from './BaseView';
 
 const createFiltersTemplate = () => `
@@ -16,8 +17,8 @@ const createFiltersTemplate = () => `
   </form>
 `;
 
-class FiltersView extends BaseView {
-  getTemplate() {
+class FiltersView extends AbstractView {
+  get template() {
     return createFiltersTemplate();
   }
 }

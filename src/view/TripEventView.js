@@ -3,6 +3,7 @@ import BaseView from './BaseView';
 import TripEventsFormView from '../view/TripEventsFormView';
 import { capitalize } from '../utils';
 import { destinations, offers } from '../mock/trip-event';
+import AbstractView from '../framework/view/abstract-view';
 
 const createTripEventTemplate = (tripEvent) => {
   const dateFrom = dayjs(tripEvent.date_from);
@@ -71,32 +72,40 @@ const createTripEventTemplate = (tripEvent) => {
   `;
 };
 
-class TripEventView extends BaseView {
+class TripEventView extends AbstractView {
+  #form = null
+
   constructor(tripData) {
     super();
     this.tripData = tripData;
-    this.form = null;
 
-    this._arrow = this.getElement().querySelector('.event__rollup-btn');
-    this._arrow.addEventListener('click', (evt) => this.onArrowClick(evt));
+    this.setArrowClickHandler(() => {
+      console.log('clicked');
+      this.element.replaceWith(this.form.element);
+    });
   }
 
-  getTemplate() {
+  get template() {
     return createTripEventTemplate(this.tripData);
   }
 
-  getForm() {
-    if (!this.form) {
-      this.form = new TripEventsFormView(this.tripData);
-      this.form.setTripEvent(this);
+  get form() {
+    if (!this.#form) {
+      this.#form = new TripEventsFormView(this.tripData);
+      this.#form.tripEvent = this;
     }
-    return this.form;
+    return this.#form;
   }
 
-  onArrowClick(evt) {
-    console.log('clicked');
-    this.element.replaceWith(this.getForm().getElement());
-  }
+  #arrowClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.arrowClick();
+  };
+
+  setArrowClickHandler = (callback) => {
+    this._callback.arrowClick = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#arrowClickHandler);
+  };
 }
 
 export default TripEventView;
