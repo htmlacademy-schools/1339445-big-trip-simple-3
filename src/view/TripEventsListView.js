@@ -1,6 +1,5 @@
 import { createElement, render } from '../framework/render';
 import AbstractView from '../framework/view/abstract-view';
-import BaseView from './BaseView';
 
 const createTripEventsListTemplate = () => `
   <ul class="trip-events__list"></ul>
@@ -84,7 +83,7 @@ class TripEventsListView extends AbstractView {
     this.tripEvents.push(component);
     if (this.isEmpty()) {
       this.removeElement();
-      this.element;
+      this.element; // just recreate element
     } else {
       this._appendComponent(component);
     }

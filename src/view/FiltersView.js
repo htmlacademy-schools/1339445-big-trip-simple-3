@@ -1,5 +1,4 @@
 import AbstractView from '../framework/view/abstract-view';
-import BaseView from './BaseView';
 
 const createFiltersTemplate = () => `
   <form class="trip-filters" action="#" method="get">

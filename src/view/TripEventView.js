@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import BaseView from './BaseView';
 import TripEventsFormView from '../view/TripEventsFormView';
 import { capitalize } from '../utils';
 import { destinations, offers } from '../mock/trip-event';
@@ -73,14 +72,14 @@ const createTripEventTemplate = (tripEvent) => {
 };
 
 class TripEventView extends AbstractView {
-  #form = null
+  #form = null;
 
   constructor(tripData) {
     super();
     this.tripData = tripData;
 
     this.setArrowClickHandler(() => {
-      console.log('clicked');
+      // console.log('clicked');
       this.element.replaceWith(this.form.element);
     });
   }

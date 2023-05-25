@@ -1,5 +1,4 @@
 import AbstractView from '../framework/view/abstract-view';
-import BaseView from './BaseView';
 
 const createTripEventsSortingTemplate = () => `
   <form class="trip-events__trip-sort  trip-sort" action="#" method="get">

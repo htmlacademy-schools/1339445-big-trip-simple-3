@@ -1,10 +1,14 @@
 import dayjs from 'dayjs';
-import BaseView from './BaseView';
 import TripEventView from '../view/TripEventView';
 import { destinations, generateOffers, offers } from '../mock/trip-event';
 import { TRIP_EVENT_TYPES } from '../const';
 import { capitalize } from '../utils';
 import AbstractView from '../framework/view/abstract-view';
+
+const FormMode = {
+  NEW: 'NEW',
+  EDIT: 'EDIT',
+};
 
 const createTripEventsFormTemplate = (tripEvent = null) => {
   let mode;
@@ -89,7 +93,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
         <button class="event__reset-btn" type="reset">Delete</button>
         <button class="event__rollup-btn" type="button">
-      `
+      `;
     }
   };
 
@@ -169,11 +173,6 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
   `;
 };
 
-const FormMode = {
-  NEW: 'NEW',
-  EDIT: 'EDIT',
-}
-
 class TripEventsFormView extends AbstractView {
   #tripEvent = null;
   _mode = FormMode.NEW;
@@ -188,7 +187,7 @@ class TripEventsFormView extends AbstractView {
       this._mode = FormMode.NEW;
     }
 
-    // set Listeners
+    // set listeners
     this.setFormSubmitHandler(() => console.log('submit'));
     if (this._mode === FormMode.NEW) {
       this.setCancelButtonClickHandler(() => this.deleteForm());
@@ -196,7 +195,6 @@ class TripEventsFormView extends AbstractView {
       this.setCancelButtonClickHandler(() => this.deleteTripEvent());
       this.setArrowClickHandler(() => this.cancelForm());
     }
-
 
     document.addEventListener('keydown', (evt) => {
       if (evt.key === 'Escape') {
