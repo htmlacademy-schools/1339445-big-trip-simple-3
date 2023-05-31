@@ -7,7 +7,7 @@ class TripPresenter {
   init(container, tripModel) {
     this.container = container;
     this.tripModel = tripModel;
-    this.tripEventsData = tripModel.getTripEvents();
+    this.tripEventsData = tripModel.tripEvents;
     // console.log('Trip Events: ', this.tripEventsData); // Debug information
 
     const tripEvents = this.tripEventsData.map((tripData) => new TripEventView(tripData));
