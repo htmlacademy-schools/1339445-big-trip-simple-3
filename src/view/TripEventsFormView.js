@@ -1,21 +1,16 @@
 import dayjs from 'dayjs';
 import TripEventView from '../view/TripEventView';
 import { destinations, generateOffers, offers } from '../mock/trip-event';
-import { TRIP_EVENT_TYPES } from '../const';
+import { FORM_MODE, TRIP_EVENT_TYPES } from '../const';
 import { capitalize } from '../utils';
 import AbstractView from '../framework/view/abstract-view';
-
-const FormMode = {
-  NEW: 'NEW',
-  EDIT: 'EDIT',
-};
 
 const createTripEventsFormTemplate = (tripEvent = null) => {
   let mode;
   if (tripEvent) {
-    mode = FormMode.EDIT;
+    mode = FORM_MODE.EDIT;
   } else {
-    mode = FormMode.NEW;
+    mode = FORM_MODE.NEW;
   }
 
   if (!tripEvent) {
@@ -83,7 +78,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
     .join('');
 
   const listControls = () => {
-    if (mode === FormMode.NEW) {
+    if (mode === FORM_MODE.NEW) {
       return `
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
         <button class="event__reset-btn" type="reset">Cancel</button>
@@ -173,51 +168,28 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
   `;
 };
 
-class TripEventsFormView extends AbstractView {
+export default class TripEventsFormView extends AbstractView {
   #tripEvent = null;
-  _mode = FormMode.NEW;
+  #tripEventData = null;
 
-  constructor(tripData) {
-    super();
-    this.tripData = tripData;
-
-    if (this.tripData) {
-      this._mode = FormMode.EDIT;
-    } else {
-      this._mode = FormMode.NEW;
-    }
-
-    // set listeners
-    this.setFormSubmitHandler(() => console.log('submit'));
-    if (this._mode === FormMode.NEW) {
-      this.setCancelButtonClickHandler(() => this.deleteForm());
-    } else { // if (this._mode === FormMode.EDIT)
-      this.setCancelButtonClickHandler(() => this.deleteTripEvent());
-      this.setArrowClickHandler(() => this.cancelForm());
-    }
-
-    document.addEventListener('keydown', (evt) => {
-      if (evt.key === 'Escape') {
-        if (this.isActive()) {
-          this.cancelForm();
-        }
-      }
-    });
-  }
+  mode = FORM_MODE.NEW;
 
   get template() {
-    return createTripEventsFormTemplate(this.tripData);
+    return createTripEventsFormTemplate(this.#tripEventData);
   }
 
-  get tripEvent() {
-    if (!this.#tripEvent) {
-      this.#tripEvent = new TripEventView(this.tripData);
+  updateData(tripEventData, tripEvent) {
+    this.#tripEventData = tripEventData;
+    this.#tripEvent = tripEvent;
+    this.#updateMode();
+  }
+
+  #updateMode() {
+    if (this.#tripEventData) {
+      this.mode = FORM_MODE.EDIT;
+    } else {
+      this.mode = FORM_MODE.NEW;
     }
-    return this.#tripEvent;
-  }
-
-  set tripEvent(newValue) {
-    this.#tripEvent = newValue;
   }
 
   #formSubmitHandler = (evt) => {
@@ -249,31 +221,4 @@ class TripEventsFormView extends AbstractView {
     this._callback.arrowClick = callback;
     this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#arrowClickHandler);
   };
-
-  _closeForm() {
-    // close form and open TripEventView
-    if (this.isActive()) {
-      this.element.replaceWith(this.tripEvent.element);
-    }
-  }
-
-  cancelForm() {
-    // reset form and close it
-    this._closeForm();
-    this.element.reset();
-    // console.log('cancel');
-  }
-
-  deleteForm() {
-    this.delete();
-    // console.log('delete form');
-  }
-
-  deleteTripEvent() {
-    this.#tripEvent.delete();
-    this.delete();
-    // console.log('delete tripEvent')
-  }
 }
-
-export default TripEventsFormView;

@@ -9,3 +9,13 @@ export const TRIP_EVENT_TYPES = [
   'sightseeing',
   'restaurant',
 ];
+
+export const LIST_MODE = {
+  DEFAULT: 'DEFAULT',
+  EMPTY: 'EMPTY',
+};
+
+export const FORM_MODE = {
+  NEW: 'NEW',
+  EDIT: 'EDIT',
+};
