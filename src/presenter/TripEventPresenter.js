@@ -104,7 +104,7 @@ export default class TripEventsPresenter {
       this.#formView.updateData(tripEventData, tripEvent);
       replace(this.#formView, tripEvent);
       this.#activeTripEvent = tripEvent;
-      this.#applyFormHandlers()
+      this.#applyFormHandlers();
     });
   }
 

@@ -1,8 +1,6 @@
 import { render } from '../framework/render';
 import FiltersView from '../view/FiltersView';
-import TripEventsListView from '../view/TripEventsListView';
 import TripEventsSortingView from '../view/TripEventsSortingView';
-import TripEventView from '../view/TripEventView';
 import TripEventPresenter from './TripEventPresenter';
 
 export default class MainPresenter {
@@ -21,7 +19,7 @@ export default class MainPresenter {
     this._tripModel = tripModel;
     // console.log('Trip Events: ', this.#tripModel.tripEvents); // Debug information
 
-    this._filtersView = new FiltersView()
+    this._filtersView = new FiltersView();
     render(this._filtersView, this._filterContainer);
 
     this._sortingView = new TripEventsSortingView();

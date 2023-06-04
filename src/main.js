@@ -1,6 +1,4 @@
 import MainPresenter from './presenter/MainPresenter';
-import { render } from './framework/render';
-import FiltersView from './view/FiltersView';
 import TripModel from './model/TripModel';
 
 const tripFiltersBlock = document.querySelector('.trip-controls__filters');
