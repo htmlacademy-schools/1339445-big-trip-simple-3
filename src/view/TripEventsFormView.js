@@ -2,7 +2,17 @@ import dayjs from 'dayjs';
 import { destinations, generateOffers, offers } from '../mock/trip-event';
 import { FORM_MODE, TRIP_EVENT_TYPES } from '../const';
 import { capitalize } from '../utils';
-import AbstractView from '../framework/view/abstract-view';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view';
+
+const BLANK_TASK = {
+  id: 0,
+  base_price: null,
+  date_from: '2023-06-01T00:00:00.000Z',
+  date_to: '2023-06-01T00:00:00.000Z',
+  destination: Object.keys(destinations)[0],
+  type: TRIP_EVENT_TYPES.includes('flight') ? 'flight' : TRIP_EVENT_TYPES[0],
+  offers: [],
+}
 
 const createTripEventsFormTemplate = (tripEvent = null) => {
   let mode;
@@ -13,17 +23,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
   }
 
   if (!tripEvent) {
-    const date = dayjs().startOf('day').toISOString();
-    const defaultType = 'flight;';
-    tripEvent = {
-      id: 0,
-      base_price: null,
-      date_from: date,
-      date_to: date,
-      destination: Object.keys(destinations)[0],
-      type: TRIP_EVENT_TYPES.includes(defaultType) ? defaultType : TRIP_EVENT_TYPES[0],
-      offers: generateOffers(),
-    };
+    tripEvent = {...BLANK_TASK}
   }
 
   const dateFrom = dayjs(tripEvent.date_from);
@@ -167,7 +167,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
   `;
 };
 
-export default class TripEventsFormView extends AbstractView {
+export default class TripEventsFormView extends AbstractStatefulView {
   #tripEvent = null;
   #tripEventData = null;
 

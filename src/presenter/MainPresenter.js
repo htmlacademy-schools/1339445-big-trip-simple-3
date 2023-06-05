@@ -15,7 +15,7 @@ export default class MainPresenter {
     this._container = container;
     this._filterContainer = filterContainer;
     this._tripModel = tripModel;
-    // console.log('Trip Events: ', this._tripModel.tripEvents); // Debug information
+    console.log('Trip Events: ', this._tripModel.tripEvents); // Debug information
 
     this._filtersView = new FiltersView();
     render(this._filtersView, this._filterContainer);
