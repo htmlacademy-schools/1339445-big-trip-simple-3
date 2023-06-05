@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import TripEventView from '../view/TripEventView';
 import { destinations, generateOffers, offers } from '../mock/trip-event';
 import { FORM_MODE, TRIP_EVENT_TYPES } from '../const';
 import { capitalize } from '../utils';
