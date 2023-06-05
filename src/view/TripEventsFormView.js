@@ -1,8 +1,10 @@
 import dayjs from 'dayjs';
-import { destinations, generateOffers, offers } from '../mock/trip-event';
+import { destinations, offers } from '../mock/trip-event';
 import { FORM_MODE, TRIP_EVENT_TYPES } from '../const';
 import { capitalize } from '../utils';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
 const BLANK_TASK = {
   id: 0,
@@ -20,10 +22,6 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
     mode = FORM_MODE.EDIT;
   } else {
     mode = FORM_MODE.NEW;
-  }
-
-  if (!tripEvent) {
-    tripEvent = {...BLANK_TASK}
   }
 
   const dateFrom = dayjs(tripEvent.date_from);
@@ -168,27 +166,16 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
 };
 
 export default class TripEventsFormView extends AbstractStatefulView {
-  #tripEvent = null;
-  #tripEventData = null;
+  _state = BLANK_TASK;
 
   mode = FORM_MODE.NEW;
 
   get template() {
-    return createTripEventsFormTemplate(this.#tripEventData);
+    return createTripEventsFormTemplate(this._state);
   }
 
-  updateData(tripEventData, tripEvent) {
-    this.#tripEventData = tripEventData;
-    this.#tripEvent = tripEvent;
-    this.#updateMode();
-  }
-
-  #updateMode() {
-    if (this.#tripEventData) {
-      this.mode = FORM_MODE.EDIT;
-    } else {
-      this.mode = FORM_MODE.NEW;
-    }
+  setMode(mode) {
+    this.mode = mode;
   }
 
   #formSubmitHandler = (evt) => {
