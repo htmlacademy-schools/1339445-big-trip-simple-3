@@ -33,6 +33,20 @@ class TripEventsSortingView extends AbstractView {
   get template() {
     return createTripEventsSortingTemplate();
   }
+
+  getCurrentSortingType() {
+    return this.element.querySelector('input[name="trip-sort"]:checked').value;
+  }
+
+  #sortingFormHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.sortingFormChange(evt);
+  };
+
+  setSortingFormChangeHandler = (callback) => {
+    this._callback.sortingFormChange = callback;
+    this.element.addEventListener('change', this.#sortingFormHandler);
+  };
 }
 
 export default TripEventsSortingView;
