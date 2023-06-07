@@ -1,8 +1,10 @@
 import dayjs from 'dayjs';
-import { destinations, generateOffers, offers } from '../mock/trip-event';
+import { destinations, offers } from '../mock/trip-event';
 import { FORM_MODE, TRIP_EVENT_TYPES } from '../const';
 import { capitalize } from '../utils';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
 const BLANK_TASK = {
   id: 0,
@@ -12,27 +14,16 @@ const BLANK_TASK = {
   destination: Object.keys(destinations)[0],
   type: TRIP_EVENT_TYPES.includes('flight') ? 'flight' : TRIP_EVENT_TYPES[0],
   offers: [],
-}
+};
 
-const createTripEventsFormTemplate = (tripEvent = null) => {
-  let mode;
-  if (tripEvent) {
-    mode = FORM_MODE.EDIT;
-  } else {
-    mode = FORM_MODE.NEW;
-  }
+const createTripEventsFormTemplate = (tripEventData, mode) => {
+  const dateFrom = dayjs(tripEventData.date_from);
+  const dateTo = dayjs(tripEventData.date_to);
+  const destination = destinations[tripEventData.destination];
 
-  if (!tripEvent) {
-    tripEvent = {...BLANK_TASK}
-  }
-
-  const dateFrom = dayjs(tripEvent.date_from);
-  const dateTo = dayjs(tripEvent.date_to);
-  const destination = destinations[tripEvent.destination];
-
-  const getTripTypeIconSrc = () => `img/icons/${tripEvent.type}.png`;
+  const getTripTypeIconSrc = () => `img/icons/${tripEventData.type}.png`;
   const getDateTimeString = (date) => date.format('DD/MM/YY HH:mm');
-  const getPrice = () => (tripEvent.base_price === null) ? '' : tripEvent.base_price;
+  const getPrice = () => (tripEventData.base_price === null) ? '' : tripEventData.base_price;
 
   const listTripEventTypes = () => TRIP_EVENT_TYPES.map((tripEventType) => `
         <div class="event__type-item">
@@ -53,7 +44,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
 
   const listOffers = () => {
     const resultList = [];
-    for (const [offerId, isActive] of Object.entries(tripEvent.offers)) {
+    for (const [offerId, isActive] of Object.entries(tripEventData.offers)) {
       const offer = offers[offerId];
       resultList.push(`
         <div class="event__offer-selector">
@@ -92,7 +83,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
   };
 
   return `
-    <form class="event event--edit" action="#" method="post">
+    <form class="event event--edit" action="#" method="post" autocomplete="off">
       <header class="event__header">
         <div class="event__type-wrapper">
           <label class="event__type  event__type-btn" for="event-type-toggle-1">
@@ -111,7 +102,7 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
 
         <div class="event__field-group  event__field-group--destination">
           <label class="event__label  event__type-output" for="event-destination-1">
-            ${capitalize(tripEvent.type)}
+            ${capitalize(tripEventData.type)}
           </label>
           <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination.name}" list="destination-list-1">
           <datalist id="destination-list-1">
@@ -168,27 +159,18 @@ const createTripEventsFormTemplate = (tripEvent = null) => {
 };
 
 export default class TripEventsFormView extends AbstractStatefulView {
-  #tripEvent = null;
-  #tripEventData = null;
-
+  _state = BLANK_TASK;
   mode = FORM_MODE.NEW;
 
+  #datepickerFrom = null;
+  #datepickerTo = null;
+
   get template() {
-    return createTripEventsFormTemplate(this.#tripEventData);
+    return createTripEventsFormTemplate(this._state, this.mode);
   }
 
-  updateData(tripEventData, tripEvent) {
-    this.#tripEventData = tripEventData;
-    this.#tripEvent = tripEvent;
-    this.#updateMode();
-  }
-
-  #updateMode() {
-    if (this.#tripEventData) {
-      this.mode = FORM_MODE.EDIT;
-    } else {
-      this.mode = FORM_MODE.NEW;
-    }
+  setMode(mode) {
+    this.mode = mode;
   }
 
   #formSubmitHandler = (evt) => {
@@ -220,4 +202,128 @@ export default class TripEventsFormView extends AbstractStatefulView {
     this._callback.arrowClick = callback;
     this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#arrowClickHandler);
   };
+
+  #setDateUpdateHandler = () => {
+    if (this._state.date_from) {
+      this.#datepickerFrom = flatpickr(
+        this.element.querySelector('#event-start-time-1'),
+        {
+          dateFormat: 'd/m/y H:i',
+          defaultDate: this._state.date_from,
+          enableTime: true,
+          time_24hr: true,
+          onClose: ([dateFrom]) => {
+            let newDate = dateFrom.toISOString();
+            if (newDate > this._state.date_to) {
+              alert('Дата начала не может быть позже даты окончания');
+              newDate = this._state.date_from;
+            }
+            this.updateElement({
+              date_from: newDate,
+            });
+          },
+        },
+      );
+    }
+    if (this._state.date_to) {
+      this.#datepickerTo = flatpickr(
+        this.element.querySelector('#event-end-time-1'),
+        {
+          dateFormat: 'd/m/y H:i',
+          defaultDate: this._state.date_to,
+          enableTime: true,
+          time_24hr: true,
+          onClose: ([dateTo]) => {
+            let newDate = dateTo.toISOString();
+            if (this._state.date_from > dateTo) {
+              alert('Дата окончания не может быть раньше даты начала');
+              newDate = this._state.date_to;
+            }
+            this.updateElement({
+              date_to: newDate,
+            });
+          },
+        },
+      );
+    }
+  };
+
+  _restoreHandlers() {
+    this.#setDestinationTypeUpdateHandler();
+    this.#setDestinationUpdateHandler();
+    this.#setDateUpdateHandler();
+    this.#setPriceUpdateHandler();
+    this.#setOffersUpdateHandler();
+
+    if (this._callback.formSubmit) {
+      this.setFormSubmitHandler(this._callback.formSubmit);
+    }
+    if (this._callback.cancelButtonClick) {
+      this.setCancelButtonClickHandler(this._callback.cancelButtonClick);
+    }
+    if (this._callback.arrowClick) {
+      this.setArrowClickHandler(this._callback.arrowClick);
+    }
+  }
+
+  #setOffersUpdateHandler() {
+    const checkboxes = this.element.querySelectorAll('.event__offer-checkbox');
+    for (const checkbox of checkboxes) {
+      checkbox.addEventListener('change', (evt) => {
+        const checkboxId = evt.target.id; // looks like 'event-offer-${offer.id}-1'
+        const offerId = +checkboxId.split('-')[2];
+        const newOffers = {...this._state.offers};
+        newOffers[offerId] = evt.target.checked;
+        this.updateElement({
+          offers: newOffers,
+        });
+      });
+    }
+  }
+
+  #setPriceUpdateHandler() {
+    const input = this.element.querySelector('#event-price-1');
+    input.addEventListener('change', (evt) => {
+      const newPrice = +evt.target.value;
+      if (isNaN(newPrice)) {
+        alert('Некорректная стоимость');
+      } else if (newPrice < 0) {
+        alert('Стоимость не может быть отрицательной');
+      } else {
+        this.updateElement({
+          base_price: newPrice,
+        });
+      }
+    });
+  }
+
+  #setDestinationTypeUpdateHandler() {
+    const radios = this.element.querySelectorAll('input[name="event-type"]');
+    for (const radio of radios) {
+      radio.addEventListener('change', (evt) => {
+        const value = evt.target.value;
+        this.updateElement({
+          type: value,
+        });
+      });
+    }
+  }
+
+  #setDestinationUpdateHandler() {
+    const input = this.element.querySelector('#event-destination-1');
+    input.addEventListener('change', (evt) => {
+      const value = evt.target.value.toLowerCase(); // case insensitive matching
+      for (const destination of Object.values(destinations)) {
+        if (destination.name.toLowerCase() === value) {
+          evt.target.value = destination.name;
+          this.updateElement({
+            destination: destination.id,
+          });
+          return;
+        }
+      }
+
+      // incorrect destination.name here...
+    });
+  }
 }

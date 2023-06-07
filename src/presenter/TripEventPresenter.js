@@ -110,7 +110,7 @@ export default class TripEventsPresenter {
         };
         break;
       case SORTING_BY.PRICE:
-        comparingFunction = (a, b) => a.base_price - b.base_price;
+        comparingFunction = (a, b) => -(a.base_price - b.base_price);
         break;
       default:
         throw Error(`Unknown sorting type: "${this.#sortingType}"`);
@@ -147,7 +147,8 @@ export default class TripEventsPresenter {
     tripEvent.setArrowClickHandler(() => {
       // console.log('clicked');
       this.#closeForm();
-      this.#formView.updateData(tripEventData, tripEvent);
+      this.#formView.setMode(FORM_MODE.EDIT);
+      this.#formView.updateElement(tripEventData);
       replace(this.#formView, tripEvent);
       this.#activeTripEvent = tripEvent;
       this.#activeTripEventId = tripEventData.id;
