@@ -147,8 +147,8 @@ export default class TripEventsPresenter {
     tripEvent.setArrowClickHandler(() => {
       // console.log('clicked');
       this.#closeForm();
-      this.#formView.updateElement(tripEventData);
       this.#formView.setMode(FORM_MODE.EDIT);
+      this.#formView.updateElement(tripEventData);
       replace(this.#formView, tripEvent);
       this.#activeTripEvent = tripEvent;
       this.#activeTripEventId = tripEventData.id;

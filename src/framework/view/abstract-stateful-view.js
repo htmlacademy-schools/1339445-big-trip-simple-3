@@ -43,7 +43,7 @@ export default class AbstractStatefulView extends AbstractView {
     this.removeElement();
 
     const newElement = this.element;
-    newElement.replaceWith(prevElement);
+    prevElement.replaceWith(newElement);
 
     this._restoreHandlers();
   }
