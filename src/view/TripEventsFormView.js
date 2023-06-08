@@ -6,11 +6,13 @@ import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
+const _currentDate = dayjs().startOf('minute');
+
 const BLANK_TASK = {
   id: 0,
-  base_price: null,
-  date_from: '2023-06-01T00:00:00.000Z',
-  date_to: '2023-06-01T00:00:00.000Z',
+  base_price: 0,
+  date_from: _currentDate.toISOString(),
+  date_to: _currentDate.add(1, 'days').toISOString(),
   destination: Object.keys(destinations)[0],
   type: TRIP_EVENT_TYPES.includes('flight') ? 'flight' : TRIP_EVENT_TYPES[0],
   offers: [],
@@ -23,7 +25,7 @@ const createTripEventsFormTemplate = (tripEventData, mode) => {
 
   const getTripTypeIconSrc = () => `img/icons/${tripEventData.type}.png`;
   const getDateTimeString = (date) => date.format('DD/MM/YY HH:mm');
-  const getPrice = () => (tripEventData.base_price === null) ? '' : tripEventData.base_price;
+  const getPrice = () => tripEventData.base_price;
 
   const listTripEventTypes = () => TRIP_EVENT_TYPES.map((tripEventType) => `
         <div class="event__type-item">
@@ -266,11 +268,17 @@ export default class TripEventsFormView extends AbstractStatefulView {
     }
   }
 
+  createBlankForm() {
+    this._setState(BLANK_TASK);
+    this.element;
+    this._restoreHandlers();
+  }
+
   #setOffersUpdateHandler() {
     const checkboxes = this.element.querySelectorAll('.event__offer-checkbox');
     for (const checkbox of checkboxes) {
       checkbox.addEventListener('change', (evt) => {
-        const checkboxId = evt.target.id; // looks like 'event-offer-${offer.id}-1'
+        const checkboxId = evt.target.id; // it looks like 'event-offer-${offer.id}-1'
         const offerId = +checkboxId.split('-')[2];
         const newOffers = {...this._state.offers};
         newOffers[offerId] = evt.target.checked;

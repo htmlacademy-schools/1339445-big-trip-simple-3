@@ -27,3 +27,9 @@ export const SORTING_BY = {
   PRICE: 'sort-price',
   // OFFER: 'sort-offer', // not implemented
 };
+
+export const FILTER_MODE = {
+  EVERYTHING: 'everything',
+  FUTURE: 'future',
+  PAST: 'past',
+};
