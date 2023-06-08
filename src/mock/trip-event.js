@@ -2,10 +2,10 @@ import { TRIP_EVENT_TYPES } from '../const';
 import { getLoremIpsum, getRandomInt, getRandomElement, sample, getTrueWithChance } from '../utils';
 import dayjs from 'dayjs';
 
-// !!
+// !!!!!!!!
 // В этом файле многие некоторые ключи объектов названы не в стиле camelCase.
 // Это было сделано намеренно для поддержания соответствия именования ключей
-// как в тз
+// как в ТЗ
 
 const generatePictures = () => {
   const picturesNumber = getRandomInt(1, 6);
@@ -55,7 +55,7 @@ const generateTripType = () => getRandomElement(TRIP_EVENT_TYPES);
 
 const generateDate = (initialDate = undefined) => {
   if (typeof initialDate === 'undefined') {
-    initialDate = dayjs();
+    initialDate = dayjs().subtract(1, 'days');
   }
   initialDate = initialDate.startOf('minute');
 
@@ -93,7 +93,7 @@ export const generateOffers = () => {
 };
 
 export const generateTripEvents = (tripsNumber) => {
-  let initialDate = dayjs();
+  let initialDate = dayjs().subtract(1, 'days');
   const trips = new Array(tripsNumber);
   for (let i = 0; i < tripsNumber; ++i) {
     const { date_from, date_to } = generateDate(initialDate);

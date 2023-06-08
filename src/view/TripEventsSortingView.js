@@ -38,6 +38,10 @@ class TripEventsSortingView extends AbstractView {
     return this.element.querySelector('input[name="trip-sort"]:checked').value;
   }
 
+  setCurrentSortingType(sortingType) {
+    this.element.querySelector(`input[value="${sortingType}"]`).checked = true;
+  }
+
   #sortingFormHandler = (evt) => {
     evt.preventDefault();
     this._callback.sortingFormChange(evt);

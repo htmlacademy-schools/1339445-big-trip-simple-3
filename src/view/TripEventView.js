@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { capitalize } from '../utils';
 import { destinations, offers } from '../mock/trip-event';
-import AbstractView from '../framework/view/abstract-view';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 
 const createTripEventTemplate = (tripEvent) => {
   const dateFrom = dayjs(tripEvent.date_from);
@@ -70,16 +70,16 @@ const createTripEventTemplate = (tripEvent) => {
   `;
 };
 
-class TripEventView extends AbstractView {
-  #tripEventData = null;
+class TripEventView extends AbstractStatefulView {
+  _state = null;
 
   constructor(tripEventData) {
     super();
-    this.#tripEventData = tripEventData;
+    this._state = tripEventData;
   }
 
   get template() {
-    return createTripEventTemplate(this.#tripEventData);
+    return createTripEventTemplate(this._state);
   }
 
   #arrowClickHandler = (evt) => {
@@ -91,6 +91,12 @@ class TripEventView extends AbstractView {
     this._callback.arrowClick = callback;
     this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#arrowClickHandler);
   };
+
+  _restoreHandlers() {
+    if (this._callback.arrowClick) {
+      this.setArrowClickHandler(this._callback.arrowClick);
+    }
+  }
 }
 
 export default TripEventView;

@@ -16,10 +16,18 @@ const createFiltersTemplate = () => `
   </form>
 `;
 
-class FiltersView extends AbstractView {
+export default class FiltersView extends AbstractView {
   get template() {
     return createFiltersTemplate();
   }
-}
 
-export default FiltersView;
+  #filterChangeHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.filterChange(evt);
+  };
+
+  setFilterChangeHandler = (callback) => {
+    this._callback.filterChange = callback;
+    this.element.addEventListener('change', this.#filterChangeHandler);
+  };
+}
