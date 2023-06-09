@@ -127,7 +127,7 @@ export default class TripEventsPresenter {
   }
 
   #onTripModelCallback = (event) => {
-    console.log('trip model callback: ' + event);
+    // console.log(`trip model callback: ${ event}`);
     if (event === TRIP_MODEL_EVENT.INIT) {
       this.#initState.tripModel = true;
       if (this.#isAllModelsInited()) {
@@ -135,11 +135,11 @@ export default class TripEventsPresenter {
       }
     } else if (event === TRIP_MODEL_EVENT.REQUEST_SUCCESS) {
       const formStatus = this.#formView.status;
-      console.log('status: ' + formStatus);
+      // console.log(`status: ${ formStatus}`);
       this.#formView.unlock();
 
       if (formStatus === FORM_STATUS.SAVING) {
-        if (this.#formView.mode == FORM_MODE.NEW) {
+        if (this.#formView.mode === FORM_MODE.NEW) {
           this.#addActiveTripEvent();
         } else {
           this.#updateActiveTripEvent();

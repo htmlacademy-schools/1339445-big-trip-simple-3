@@ -3,7 +3,7 @@ import ApiService, { Method } from '../framework/api-service.js';
 export const STATUS = {
   success: 'success',
   error: 'error',
-}
+};
 
 export default class TripApiService extends ApiService {
   get tripEvents() {

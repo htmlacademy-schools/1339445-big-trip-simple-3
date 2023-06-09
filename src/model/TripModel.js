@@ -21,9 +21,9 @@ export default class TripEventsModel extends Observable {
       this.#tripEvents = await this.#tripApiService.tripEvents;
     } catch(err) {
       this.#tripEvents = [];
-      console.log(err);
+      // console.log(err);
     }
-    console.log(this.#tripEvents);
+    // console.log(this.#tripEvents);
 
     this._notify(TRIP_MODEL_EVENT.INIT);
   };

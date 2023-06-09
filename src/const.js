@@ -26,4 +26,4 @@ export const FORM_STATUS = {
   READY: 'READY',
   SAVING: 'SAVING',
   DELETING: 'DELETING',
-}
+};

@@ -18,9 +18,9 @@ export default class DestinationModel extends Observable {
       this.#destinations = await this.#destinationApiService.destinations;
     } catch(err) {
       this.#destinations = [];
-      console.log(err);
+      // console.log(err);
     }
-    console.log(this.#destinations);
+    // console.log(this.#destinations);
 
     this._notify(DESTINATION_MODEL_EVENT.INIT);
   };
