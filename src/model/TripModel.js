@@ -1,7 +1,29 @@
-import { generateTripEvents } from '../mock/trip-event';
+import Observable from '../framework/observable';
 
-export default class TripEventsModel {
-  #tripEvents = generateTripEvents(2);
+export const TRIP_MODEL_EVENT = {
+  INIT: 'init',
+};
+
+export default class TripEventsModel extends Observable {
+  #tripApiService = null;
+  #tripEvents = [];
+
+  constructor(tripApiService) {
+    super();
+    this.#tripApiService = tripApiService;
+  }
+
+  init = async () => {
+    try {
+      this.#tripEvents = await this.#tripApiService.tripEvents;
+    } catch(err) {
+      this.#tripEvents = [];
+      console.log(err);
+    }
+    console.log(this.#tripEvents);
+
+    this._notify(TRIP_MODEL_EVENT.INIT);
+  };
 
   get tripEvents() {
     return this.#tripEvents;
@@ -20,6 +42,9 @@ export default class TripEventsModel {
     const i = this.#getIndexOfTripById(id);
     if (i !== -1) {
       this.#tripEvents.splice(i, 1);
+
+      this.#tripApiService.removeTripById(id);
+
       return true;
     }
     return false;
@@ -31,12 +56,22 @@ export default class TripEventsModel {
   }
 
   updateTrip(tripEventData) {
-    const id = tripEventData.id;
-    const i = this.#getIndexOfTripById(id);
-    this.#tripEvents[i] = {...this.#tripEvents[i], ...tripEventData};
+    const i = this.#getIndexOfTripById(tripEventData.id);
+    if (i !== -1) {
+      this.#tripEvents[i] = {...this.#tripEvents[i], ...tripEventData};
+
+      this.#tripApiService.updateTripEvent(tripEventData);
+    }
   }
 
   addTrip(tripEventData) {
     this.#tripEvents.push(tripEventData);
+
+    this.#tripApiService.addTripEvent(tripEventData);
+  }
+
+  getNextId() {
+    // generate new unique id for tripEvent - String(max of ids + 1)
+    return String(this.#tripEvents.reduce((prevMax, {id}) => Math.max(prevMax, +id), 0) + 1);
   }
 }

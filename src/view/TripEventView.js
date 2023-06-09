@@ -1,45 +1,43 @@
 import dayjs from 'dayjs';
 import { capitalize } from '../utils';
-import { destinations, offers } from '../mock/trip-event';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 
-const createTripEventTemplate = (tripEvent) => {
-  const dateFrom = dayjs(tripEvent.date_from);
-  const dateTo = dayjs(tripEvent.date_to);
-  const destination = destinations[tripEvent.destination];
+const createTripEventTemplate = (tripEventData, offerModel, destinationModel) => {
+  const dateFrom = dayjs(tripEventData['date_from']);
+  const dateTo = dayjs(tripEventData['date_to']);
+  const destination = destinationModel.getDestinationById(tripEventData.destination);
+  const offersByType = offerModel.getOffersByType(tripEventData.type);
+  const activeOffers = offersByType.filter(({id}) => tripEventData.offers.includes(id));
 
   const getDateString = (date) => date.format('YYYY-MM-DD'); // Format to 'YYYY-MM-DD'
   const humanizeDayOfMonth = (date) => date.format('MMM D').toUpperCase(); // Format like 'MAR 3'
   const getDateTimeString = (date) => date.format('YYYY-MM-DDTHH:mm'); // Format to 'YYYY-MM-DDTHH:mm'
   const humanizeTime = (date) => date.format('HH:mm'); // Format to 'HH:mm'
 
-  const getTripTypeIconSrc = () => `img/icons/${tripEvent.type}.png`;
-  const getTripEventTitle = () => `${capitalize(tripEvent.type)} ${destination.name}`;
+  const getTripTypeIconSrc = () => `img/icons/${tripEventData.type}.png`;
+  const getTripEventTitle = () => `${capitalize(tripEventData.type)} ${destination.name}`;
+  const getTotalPrice = () => tripEventData['base_price'] +
+    activeOffers.reduce((partialSum, {price}) => partialSum + price, 0);
 
   const listActiveOffers = () => {
-    let haveActive = false;
+    if (tripEventData.offers.length === 0) {
+      return `
+        <li class="event__offer">
+          <span class="event__offer-title">No additional offers</span>
+        </li>
+      `;
+    }
     const resultList = [];
-    for (const [offerId, isActive] of Object.entries(tripEvent.offers)) {
-      if (isActive) {
-        const offer = offers[offerId];
-        resultList.push(`
-          <li class="event__offer">
-            <span class="event__offer-title">${offer.title}</span>
-            &plus;&euro;&nbsp;
-            <span class="event__offer-price">${offer.price}</span>
-          </li>
-        `);
-        haveActive = true;
-      }
+    for (const offer of activeOffers) {
+      resultList.push(`
+        <li class="event__offer">
+          <span class="event__offer-title">${offer.title}</span>
+          &plus;&euro;&nbsp;
+          <span class="event__offer-price">${offer.price}</span>
+        </li>
+      `);
     }
-    if (haveActive) {
-      return resultList.join('');
-    }
-    return `
-      <li class="event__offer">
-        <span class="event__offer-title">No additional offers</span>
-      </li>
-    `;
+    return resultList.join('');
   };
 
   return `
@@ -57,7 +55,7 @@ const createTripEventTemplate = (tripEvent) => {
         </p>
       </div>
       <p class="event__price">
-        &euro;&nbsp;<span class="event__price-value">${tripEvent.base_price}</span>
+        &euro;&nbsp;<span class="event__price-value">${getTotalPrice()}</span>
       </p>
       <h4 class="visually-hidden">Offers:</h4>
       <ul class="event__selected-offers">
@@ -72,14 +70,18 @@ const createTripEventTemplate = (tripEvent) => {
 
 class TripEventView extends AbstractStatefulView {
   _state = null;
+  #offerModel = null;
+  #destinationModel = null;
 
-  constructor(tripEventData) {
+  constructor(tripEventData, offerModel, destinationModel) {
     super();
     this._state = tripEventData;
+    this.#offerModel = offerModel;
+    this.#destinationModel = destinationModel;
   }
 
   get template() {
-    return createTripEventTemplate(this._state);
+    return createTripEventTemplate(this._state, this.#offerModel, this.#destinationModel);
   }
 
   #arrowClickHandler = (evt) => {

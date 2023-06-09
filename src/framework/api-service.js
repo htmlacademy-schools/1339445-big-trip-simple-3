@@ -1,3 +1,10 @@
+export const Method = {
+  GET: 'GET',
+  PUT: 'PUT',
+  POST: 'POST',
+  DELETE: 'DELETE',
+};
+
 /**
  * Класс для отправки запросов к серверу
  */
