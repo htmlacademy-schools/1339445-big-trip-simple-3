@@ -18,9 +18,9 @@ export default class OfferModel extends Observable {
       this.#offers = await this.#offerApiService.offers;
     } catch(err) {
       this.#offers = [];
-      console.log(err);
+      // console.log(err);
     }
-    console.log(this.#offers);
+    // console.log(this.#offers);
 
     this._notify(OFFER_MODEL_EVENT.INIT);
   };

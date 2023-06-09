@@ -21,3 +21,9 @@ export const FILTER_MODE = {
   FUTURE: 'future',
   PAST: 'past',
 };
+
+export const FORM_STATUS = {
+  READY: 'READY',
+  SAVING: 'SAVING',
+  DELETING: 'DELETING',
+};

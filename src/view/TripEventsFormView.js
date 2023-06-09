@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { FORM_MODE } from '../const';
+import { FORM_MODE, FORM_STATUS } from '../const';
 import { capitalize } from '../utils';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 import flatpickr from 'flatpickr';
@@ -170,6 +170,7 @@ const createTripEventsFormTemplate = (tripEventData, mode, offerModel, destinati
 export default class TripEventsFormView extends AbstractStatefulView {
   _state = BLANK_TASK;
   mode = FORM_MODE.NEW;
+  status = FORM_STATUS.READY;
 
   #offerModel = null;
   #destinationModel = null;
@@ -193,7 +194,9 @@ export default class TripEventsFormView extends AbstractStatefulView {
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this._callback.formSubmit();
+    if (this.status === FORM_STATUS.READY) {
+      this._callback.formSubmit();
+    }
   };
 
   setFormSubmitHandler = (callback) => {
@@ -203,7 +206,9 @@ export default class TripEventsFormView extends AbstractStatefulView {
 
   #cancelButtonHandler = (evt) => {
     evt.preventDefault();
-    this._callback.cancelButtonClick();
+    if (this.status === FORM_STATUS.READY) {
+      this._callback.cancelButtonClick();
+    }
   };
 
   setCancelButtonClickHandler = (callback) => {
@@ -213,7 +218,9 @@ export default class TripEventsFormView extends AbstractStatefulView {
 
   #arrowClickHandler = (evt) => {
     evt.preventDefault();
-    this._callback.arrowClick();
+    if (this.status === FORM_STATUS.READY) {
+      this._callback.arrowClick();
+    }
   };
 
   setArrowClickHandler = (callback) => {
@@ -279,7 +286,7 @@ export default class TripEventsFormView extends AbstractStatefulView {
     if (this._callback.cancelButtonClick) {
       this.setCancelButtonClickHandler(this._callback.cancelButtonClick);
     }
-    if (this._callback.arrowClick) {
+    if (this._callback.arrowClick && this.mode === FORM_MODE.EDIT) {
       this.setArrowClickHandler(this._callback.arrowClick);
     }
   }
@@ -295,8 +302,9 @@ export default class TripEventsFormView extends AbstractStatefulView {
       'date_to': _currentDate.add(1, 'days').toISOString(),
     };
 
+    this.status = FORM_STATUS.READY;
     this._setState(newState);
-    this.element = this.element;
+    this.element;
     this._restoreHandlers();
   }
 
@@ -304,6 +312,11 @@ export default class TripEventsFormView extends AbstractStatefulView {
     const checkboxes = this.element.querySelectorAll('.event__offer-checkbox');
     for (const checkbox of checkboxes) {
       checkbox.addEventListener('change', (evt) => {
+        if (this.status !== FORM_STATUS.READY) {
+          evt.preventDefault();
+          return;
+        }
+
         const checkboxId = evt.target.id; // it looks like 'event-offer-${offer.id}-1'
         const offerId = +checkboxId.split('-')[2];
         let newOffers;
@@ -322,6 +335,11 @@ export default class TripEventsFormView extends AbstractStatefulView {
   #setPriceUpdateHandler() {
     const input = this.element.querySelector('#event-price-1');
     input.addEventListener('change', (evt) => {
+      if (this.status !== FORM_STATUS.READY) {
+        evt.preventDefault();
+        return;
+      }
+
       const newPrice = +evt.target.value;
       if (isNaN(newPrice)) {
         alert('Некорректная стоимость');
@@ -339,6 +357,10 @@ export default class TripEventsFormView extends AbstractStatefulView {
     const radios = this.element.querySelectorAll('input[name="event-type"]');
     for (const radio of radios) {
       radio.addEventListener('change', (evt) => {
+        if (this.status !== FORM_STATUS.READY) {
+          evt.preventDefault();
+          return;
+        }
         const value = evt.target.value;
         this.updateElement({
           type: value,
@@ -350,6 +372,11 @@ export default class TripEventsFormView extends AbstractStatefulView {
   #setDestinationUpdateHandler() {
     const input = this.element.querySelector('#event-destination-1');
     input.addEventListener('change', (evt) => {
+      if (this.status !== FORM_STATUS.READY) {
+        evt.preventDefault();
+        return;
+      }
+
       const value = evt.target.value.toLowerCase(); // case insensitive matching
       for (const destination of Object.values(this.#destinationModel.destinations)) {
         if (destination.name.toLowerCase() === value) {
@@ -363,5 +390,28 @@ export default class TripEventsFormView extends AbstractStatefulView {
 
       // incorrect destination.name here...
     });
+  }
+
+  makeSaving() {
+    this.status = FORM_STATUS.SAVING;
+    const saveButton = this.element.querySelector('.event__save-btn');
+    saveButton.innerText = 'Saving...';
+  }
+
+  makeDeleting() {
+    this.status = FORM_STATUS.DELETING;
+    const deleteButton = this.element.querySelector('.event__reset-btn');
+    deleteButton.innerText = 'Deleting...';
+  }
+
+  unlock() {
+    if (this.status === FORM_STATUS.SAVING) {
+      const saveButton = this.element.querySelector('.event__save-btn');
+      saveButton.innerText = 'Save';
+    } else if (this.status === FORM_STATUS.DELETING) {
+      const deleteButton = this.element.querySelector('.event__reset-btn');
+      deleteButton.innerText = 'Delete';
+    }
+    this.status = FORM_STATUS.READY;
   }
 }

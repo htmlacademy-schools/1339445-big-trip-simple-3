@@ -41,7 +41,8 @@ export default class ApiService {
     );
 
     try {
-      ApiService.checkStatus(response);
+      // Я делаю проверку статуса в другом месте
+      // ApiService.checkStatus(response);
       return response;
     } catch (err) {
       ApiService.catchError(err);

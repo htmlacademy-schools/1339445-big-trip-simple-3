@@ -1,7 +1,10 @@
+import { STATUS } from '../api-service/TripApiService';
 import Observable from '../framework/observable';
 
 export const TRIP_MODEL_EVENT = {
-  INIT: 'init',
+  INIT: 'INIT',
+  REQUEST_SUCCESS: 'REQUEST_SUCCESS',
+  REQUEST_ERROR: 'REQUEST_ERROR',
 };
 
 export default class TripEventsModel extends Observable {
@@ -18,9 +21,9 @@ export default class TripEventsModel extends Observable {
       this.#tripEvents = await this.#tripApiService.tripEvents;
     } catch(err) {
       this.#tripEvents = [];
-      console.log(err);
+      // console.log(err);
     }
-    console.log(this.#tripEvents);
+    // console.log(this.#tripEvents);
 
     this._notify(TRIP_MODEL_EVENT.INIT);
   };
@@ -38,15 +41,21 @@ export default class TripEventsModel extends Observable {
     return -1;
   }
 
-  removeTripById(id) {
+  async removeTripById(id) {
     const i = this.#getIndexOfTripById(id);
     if (i !== -1) {
+      const result = await this.#tripApiService.deleteTripEventById(id);
+      if (result.status !== STATUS.success) {
+
+        this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
+        return false;
+      }
+
       this.#tripEvents.splice(i, 1);
-
-      this.#tripApiService.removeTripById(id);
-
+      this._notify(TRIP_MODEL_EVENT.REQUEST_SUCCESS);
       return true;
     }
+    this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
     return false;
   }
 
@@ -55,19 +64,33 @@ export default class TripEventsModel extends Observable {
     return this.#tripEvents[i];
   }
 
-  updateTrip(tripEventData) {
+  async updateTrip(tripEventData) {
     const i = this.#getIndexOfTripById(tripEventData.id);
     if (i !== -1) {
-      this.#tripEvents[i] = {...this.#tripEvents[i], ...tripEventData};
+      const result = await this.#tripApiService.updateTripEvent(tripEventData);
+      if (result.status !== STATUS.success) {
+        this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
+        return false;
+      }
 
-      this.#tripApiService.updateTripEvent(tripEventData);
+      this.#tripEvents[i] = {...this.#tripEvents[i], ...tripEventData};
+      this._notify(TRIP_MODEL_EVENT.REQUEST_SUCCESS);
+      return true;
     }
+    this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
+    return false;
   }
 
-  addTrip(tripEventData) {
-    this.#tripEvents.push(tripEventData);
+  async addTrip(tripEventData) {
+    const result = await this.#tripApiService.addTripEvent(tripEventData);
+    if (result.status !== STATUS.success) {
+      this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
+      return false;
+    }
 
-    this.#tripApiService.addTripEvent(tripEventData);
+    this.#tripEvents.push(tripEventData);
+    this._notify(TRIP_MODEL_EVENT.REQUEST_SUCCESS);
+    return true;
   }
 
   getNextId() {
