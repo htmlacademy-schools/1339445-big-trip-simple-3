@@ -1,7 +1,7 @@
 import { RenderPosition, remove, render, replace } from '../framework/render';
 import TripEventsListView from '../view/TripEventsListView';
 import TripEventsSortingView from '../view/TripEventsSortingView';
-import { LIST_MODE, FORM_MODE, SORTING_BY, FILTER_MODE } from '../const';
+import { LIST_MODE, FORM_MODE, SORTING_BY, FILTER_MODE, FORM_STATUS } from '../const';
 import TripEventsFormView from '../view/TripEventsFormView';
 import TripEventView from '../view/TripEventView';
 import { TRIP_MODEL_EVENT } from '../model/TripModel';
@@ -55,9 +55,9 @@ export default class TripEventsPresenter {
       }
     });
 
-    this.#tripModel.addObserver(this.#onTripModelInitCallback);
-    this.#offerModel.addObserver(this.#onOfferModelInitCallback);
-    this.#destinationModel.addObserver(this.#onDestinationModelInitCallback);
+    this.#tripModel.addObserver(this.#onTripModelCallback);
+    this.#offerModel.addObserver(this.#onOfferModelCallback);
+    this.#destinationModel.addObserver(this.#onDestinationModelCallback);
 
     const addTripEventButton = document.querySelector('.trip-main__event-add-btn');
     addTripEventButton.addEventListener('click', () => this.#addTripEventButtonClickHandler());
@@ -126,16 +126,35 @@ export default class TripEventsPresenter {
     return Object.values(this.#initState).every((status) => status);
   }
 
-  #onTripModelInitCallback = (event) => {
+  #onTripModelCallback = (event) => {
+    console.log('trip model callback: ' + event);
     if (event === TRIP_MODEL_EVENT.INIT) {
       this.#initState.tripModel = true;
       if (this.#isAllModelsInited()) {
         this.#recreateEventsList();
       }
+    } else if (event === TRIP_MODEL_EVENT.REQUEST_SUCCESS) {
+      const formStatus = this.#formView.status;
+      console.log('status: ' + formStatus);
+      this.#formView.unlock();
+
+      if (formStatus === FORM_STATUS.SAVING) {
+        if (this.#formView.mode == FORM_MODE.NEW) {
+          this.#addActiveTripEvent();
+        } else {
+          this.#updateActiveTripEvent();
+        }
+      } else if (formStatus === FORM_STATUS.DELETING) {
+        this.#deleteActiveTripEvent();
+      }
+
+    } else if (event === TRIP_MODEL_EVENT.REQUEST_ERROR) {
+      this.#formView.unlock();
+      this.#formView.shake();
     }
   };
 
-  #onOfferModelInitCallback = (event) => {
+  #onOfferModelCallback = (event) => {
     if (event === OFFER_MODEL_EVENT.INIT) {
       this.#initState.offerModel = true;
       if (this.#isAllModelsInited()) {
@@ -144,7 +163,7 @@ export default class TripEventsPresenter {
     }
   };
 
-  #onDestinationModelInitCallback = (event) => {
+  #onDestinationModelCallback = (event) => {
     if (event === DESTINATION_MODEL_EVENT.INIT) {
       this.#initState.destinationModel = true;
       if (this.#isAllModelsInited()) {
@@ -254,8 +273,38 @@ export default class TripEventsPresenter {
     return tripEvent;
   }
 
-  #deleteActiveTripEvent() {
+  #startDeletingActiveTripEvent() {
+    this.#formView.makeDeleting();
     this.#tripModel.removeTripById(this.#activeTripEventId);
+  }
+
+  #startUpdatingActiveTripEvent() {
+    this.#formView.makeSaving();
+    const newTripEventData = this.#formView.getState();
+    this.#tripModel.updateTrip(newTripEventData);
+  }
+
+  #updateActiveTripEvent() {
+    // console.log('updating complete');
+    const newTripEventData = this.#formView.getState();
+    this.#activeTripEvent.updateElement(newTripEventData);
+    this.#closeForm();
+  }
+
+  #startAddingActiveTripEvent() {
+    this.#formView.makeSaving();
+    const newTripEventData = this.#formView.getState();
+    this.#tripModel.addTrip(newTripEventData);
+  }
+
+  #addActiveTripEvent() {
+    // console.log('adding complete');
+    this.#closeForm();
+    this.#recreateEventsList();
+  }
+
+  #deleteActiveTripEvent() {
+    // console.log('deleting complete');
     this.#activeTripEvent = null;
     this.#activeTripEventId = null;
 
@@ -264,22 +313,13 @@ export default class TripEventsPresenter {
   }
 
   #applyFormHandlers() {
+    // console.log('form mode: ' + this.#formView.mode);
     if (this.#formView.mode === FORM_MODE.NEW) {
-      this.#formView.setFormSubmitHandler(() => {
-        const newTripEventData = this.#formView.getState();
-        this.#tripModel.addTrip(newTripEventData);
-        this.#closeForm();
-        this.#recreateEventsList();
-      });
+      this.#formView.setFormSubmitHandler(() => this.#startAddingActiveTripEvent());
       this.#formView.setCancelButtonClickHandler(() => this.#closeForm());
     } else { // if (this._mode === FormMode.EDIT)
-      this.#formView.setFormSubmitHandler(() => {
-        const newTripEventData = this.#formView.getState();
-        this.#tripModel.updateTrip(newTripEventData);
-        this.#activeTripEvent.updateElement(newTripEventData);
-        this.#closeForm();
-      });
-      this.#formView.setCancelButtonClickHandler(() => this.#deleteActiveTripEvent());
+      this.#formView.setFormSubmitHandler(() => this.#startUpdatingActiveTripEvent());
+      this.#formView.setCancelButtonClickHandler(() => this.#startDeletingActiveTripEvent());
       this.#formView.setArrowClickHandler(() => this.#closeForm());
     }
   }

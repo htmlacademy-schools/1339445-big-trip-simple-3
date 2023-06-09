@@ -1,5 +1,10 @@
 import ApiService, { Method } from '../framework/api-service.js';
 
+export const STATUS = {
+  success: 'success',
+  error: 'error',
+}
+
 export default class TripApiService extends ApiService {
   get tripEvents() {
     return this._load({url: 'points'})
@@ -14,9 +19,15 @@ export default class TripApiService extends ApiService {
       headers: new Headers({'Content-Type': 'application/json'}),
     });
 
+    let status = STATUS.success;
     const parsedResponse = await ApiService.parseResponse(response);
-
-    return parsedResponse;
+    if (!response.ok) {
+      status = STATUS.error;
+    }
+    return {
+      status,
+      data: parsedResponse,
+    };
   };
 
   updateTripEvent = async (tripEventData) => {
@@ -27,9 +38,15 @@ export default class TripApiService extends ApiService {
       headers: new Headers({'Content-Type': 'application/json'}),
     });
 
+    let status = STATUS.success;
     const parsedResponse = await ApiService.parseResponse(response);
-
-    return parsedResponse;
+    if (!response.ok) {
+      status = STATUS.error;
+    }
+    return {
+      status,
+      data: parsedResponse,
+    };
   };
 
   deleteTripEventById = async (id) => {
@@ -38,6 +55,13 @@ export default class TripApiService extends ApiService {
       method: Method.DELETE,
     });
 
-    return response;
+    let status = STATUS.success;
+    if (!response.ok) {
+      status = STATUS.error;
+    }
+    return {
+      status,
+      data: null,
+    };
   };
 }
