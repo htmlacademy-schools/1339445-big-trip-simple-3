@@ -8,7 +8,7 @@ import DestinationModel from './model/DestinationModel';
 import OfferApiService from './api-service/OfferApiService';
 import DestinationApiService from './api-service/DestinationApiService';
 
-const AUTHORIZATION = 'Basic fS2nfS49wcl1HA22dfg';
+const AUTHORIZATION = 'Basic fS2nfS49wcl1HA22dfgf';
 const END_POINT = 'https://18.ecmascript.pages.academy/big-trip';
 
 const tripFiltersBlock = document.querySelector('.trip-controls__filters');
