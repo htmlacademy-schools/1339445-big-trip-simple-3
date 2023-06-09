@@ -51,7 +51,13 @@ function replace(newComponent, oldComponent) {
   const newElement = newComponent.element;
   const oldElement = oldComponent.element;
 
-  oldElement.replaceWith(newElement);
+  const parent = oldElement.parentElement;
+
+  if (parent === null) {
+    throw new Error('Parent element doesn\'t exist');
+  }
+
+  parent.replaceChild(newElement, oldElement);
 }
 
 /**

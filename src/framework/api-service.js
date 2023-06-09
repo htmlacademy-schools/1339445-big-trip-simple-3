@@ -1,10 +1,3 @@
-export const Method = {
-  GET: 'GET',
-  PUT: 'PUT',
-  POST: 'POST',
-  DELETE: 'DELETE',
-};
-
 /**
  * Класс для отправки запросов к серверу
  */
@@ -41,8 +34,7 @@ export default class ApiService {
     );
 
     try {
-      // Я делаю проверку статуса в другом месте
-      // ApiService.checkStatus(response);
+      ApiService.checkStatus(response);
       return response;
     } catch (err) {
       ApiService.catchError(err);
