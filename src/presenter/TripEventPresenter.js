@@ -4,13 +4,18 @@ import TripEventsSortingView from '../view/TripEventsSortingView';
 import { LIST_MODE, FORM_MODE, SORTING_BY, FILTER_MODE } from '../const';
 import TripEventsFormView from '../view/TripEventsFormView';
 import TripEventView from '../view/TripEventView';
+import { TRIP_MODEL_EVENT } from '../model/TripModel';
+import { OFFER_MODEL_EVENT } from '../model/OfferModel';
+import { DESTINATION_MODEL_EVENT } from '../model/DestinationModel';
 
 export default class TripEventsPresenter {
   #container = null;
   #tripModel = null;
+  #filterModel = null;
+  #offerModel = null;
+  #destinationModel = null;
 
   #tripEventsList = null;
-  #filterModel = null;
   #sortingView = null;
   #formView = null;
 
@@ -20,11 +25,19 @@ export default class TripEventsPresenter {
   #activeTripEvent = null;
   #activeTripEventId = null;
 
+  #initState = {
+    tripModel: false,
+    offerModel: false,
+    destinationModel: false,
+  };
 
-  init(container, tripModel, filterModel) {
+
+  init(container, tripModel, filterModel, offerModel, destinationModel) {
     this.#container = container;
     this.#tripModel = tripModel;
     this.#filterModel = filterModel;
+    this.#offerModel = offerModel;
+    this.#destinationModel = destinationModel;
 
     this.#sortingView = new TripEventsSortingView();
     this.#sortingView.setSortingFormChangeHandler((evt) => this.#sortingChangeHandler(evt));
@@ -35,12 +48,16 @@ export default class TripEventsPresenter {
     render(this.#tripEventsList, this.#container);
     this.#filterModel.addObserver(this.#onFilterChangeCallback);
 
-    this.#formView = new TripEventsFormView();
+    this.#formView = new TripEventsFormView(this.#offerModel, this.#destinationModel);
     document.addEventListener('keydown', (evt) => {
       if (evt.key === 'Escape') {
         this.#closeForm();
       }
     });
+
+    this.#tripModel.addObserver(this.#onTripModelInitCallback);
+    this.#offerModel.addObserver(this.#onOfferModelInitCallback);
+    this.#destinationModel.addObserver(this.#onDestinationModelInitCallback);
 
     const addTripEventButton = document.querySelector('.trip-main__event-add-btn');
     addTripEventButton.addEventListener('click', () => this.#addTripEventButtonClickHandler());
@@ -49,7 +66,7 @@ export default class TripEventsPresenter {
   #addTripEventButtonClickHandler() {
     this.#closeForm();
     this.#formView.setMode(FORM_MODE.NEW);
-    this.#formView.createBlankForm();
+    this.#formView.createBlankForm(this.#tripModel);
     this.#applyFormHandlers();
     render(this.#formView, this.#tripEventsList.element, RenderPosition.BEFOREBEGIN);
     this.#restoreSortingAndFilters();
@@ -105,6 +122,37 @@ export default class TripEventsPresenter {
     this.#recreateEventsList();
   };
 
+  #isAllModelsInited() {
+    return Object.values(this.#initState).every((status) => status);
+  }
+
+  #onTripModelInitCallback = (event) => {
+    if (event === TRIP_MODEL_EVENT.INIT) {
+      this.#initState.tripModel = true;
+      if (this.#isAllModelsInited()) {
+        this.#recreateEventsList();
+      }
+    }
+  };
+
+  #onOfferModelInitCallback = (event) => {
+    if (event === OFFER_MODEL_EVENT.INIT) {
+      this.#initState.offerModel = true;
+      if (this.#isAllModelsInited()) {
+        this.#recreateEventsList();
+      }
+    }
+  };
+
+  #onDestinationModelInitCallback = (event) => {
+    if (event === DESTINATION_MODEL_EVENT.INIT) {
+      this.#initState.destinationModel = true;
+      if (this.#isAllModelsInited()) {
+        this.#recreateEventsList();
+      }
+    }
+  };
+
   #restoreSortingAndFilters() {
     this.#sortingType = SORTING_BY.DAY;
     this.#sortingView.setCurrentSortingType(this.#sortingType);
@@ -122,22 +170,31 @@ export default class TripEventsPresenter {
     return 0;
   }
 
+  #getTotalPriceOfTripEvent(tripEventData) {
+    const offersByType = this.#offerModel.getOffersByType(tripEventData.type);
+    const activeOffers = offersByType.filter(({id}) => tripEventData.offers.includes(id));
+    return tripEventData['base_price'] +
+      activeOffers.reduce((partialSum, {price}) => partialSum + price, 0);
+  }
+
   #getTripEventsWithSorting() {
     let comparingFunction;
     switch (this.#sortingType) {
       case SORTING_BY.DAY:
       // case SORTING_BY.TIME: // the same sorting for TIME
         comparingFunction = (a, b) => {
-          const dateFromResult = this.#compareISODate(a.date_from, b.date_from);
+          const dateFromResult = this.#compareISODate(a['date_from'], b['date_from']);
           if (dateFromResult === 0) {
-            const dateToResult = this.#compareISODate(a.date_to, b.date_to);
+            const dateToResult = this.#compareISODate(a['date_to'], b['date_to']);
             return dateToResult;
           }
           return dateFromResult;
         };
         break;
       case SORTING_BY.PRICE:
-        comparingFunction = (a, b) => -(a.base_price - b.base_price);
+        comparingFunction = (a, b) => -(
+          this.#getTotalPriceOfTripEvent(a) - this.#getTotalPriceOfTripEvent(b)
+        );
         break;
       default:
         throw Error(`Unknown sorting type: "${this.#sortingType}"`);
@@ -151,13 +208,13 @@ export default class TripEventsPresenter {
       case FILTER_MODE.FUTURE:
         filterFunction = (tripEventData) => {
           const currentDate = new Date().toISOString();
-          return tripEventData.date_from > currentDate;
+          return tripEventData['date_from'] > currentDate;
         };
         break;
       case FILTER_MODE.PAST: // not implemented
         filterFunction = (tripEventData) => {
           const currentDate = new Date().toISOString();
-          return tripEventData.date_to < currentDate;
+          return tripEventData['date_to'] < currentDate;
         };
         break;
       default:
@@ -181,7 +238,7 @@ export default class TripEventsPresenter {
   }
 
   #createNewTripEvent(tripEventData) {
-    const tripEvent = new TripEventView(tripEventData);
+    const tripEvent = new TripEventView(tripEventData, this.#offerModel, this.#destinationModel);
 
     tripEvent.setArrowClickHandler(() => {
       // console.log('clicked');
