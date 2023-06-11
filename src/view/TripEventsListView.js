@@ -10,9 +10,15 @@ const createElementWrapperTemplate = () => `
   <li class="trip-events__item"></li>
 `;
 
-const createMessageTemplate = () => `
-  <p class="trip-events__msg">Click New Event to create your first point</p>
-`;
+const createMessageTemplate = (listMode) => {
+  let message = 'Click New Event to create your first point';
+  if (listMode === LIST_MODE.LOADING) {
+    message = 'Loading...';
+  }
+  return `
+    <p class="trip-events__msg">${message}</p>
+  `;
+};
 
 export default class TripEventsListView extends AbstractView {
   #listMode = null;
@@ -25,8 +31,8 @@ export default class TripEventsListView extends AbstractView {
   }
 
   get template() {
-    if (this.#listMode === LIST_MODE.EMPTY) {
-      return createMessageTemplate();
+    if (this.#listMode === LIST_MODE.EMPTY || this.#listMode === LIST_MODE.LOADING) {
+      return createMessageTemplate(this.#listMode);
     } else {
       return createTripEventsListTemplate();
     }
@@ -34,8 +40,8 @@ export default class TripEventsListView extends AbstractView {
 
   updateMessage() {
     // set message text if tripList is empty
-    const filterValue = this.#filterModel.getFilter();
     if (this.#listMode === LIST_MODE.EMPTY) {
+      const filterValue = this.#filterModel.getFilter();
       let newText = 'Click New Event to create your first point'; // default value
       if (filterValue === FILTER_MODE.FUTURE) {
         newText = 'There are no future events now';

@@ -7,7 +7,7 @@ import 'flatpickr/dist/flatpickr.min.css';
 
 const BLANK_TASK = {
   id: '-1',
-  'base_price': 0,
+  'base_price': 100,
   'date_from': null,
   'date_to': null,
   destination: null,
@@ -71,10 +71,43 @@ const createTripEventsFormTemplate = (tripEventData, mode, offerModel, destinati
     return resultList.join('');
   };
 
+  const offersSection = () => {
+    if (offersByType.length === 0) {
+      return '';
+    }
+    return `
+      <section class="event__section  event__section--offers">
+        <h3 class="event__section-title  event__section-title--offers">Offers</h3>
+
+        <div class="event__available-offers">
+          ${listOffers()}
+        </div>
+      </section>
+    `;
+  };
+
   const listDestinationPictures = () => destination.pictures.map((picture) => `
         <img class="event__photo" src="${picture.src}" alt="${picture.description}">
       `)
     .join('');
+
+  const destinationSection = () => {
+    if (destination.description && destination.pictures.length === 0) {
+      return '';
+    }
+    return `
+      <section class="event__section  event__section--destination">
+        <h3 class="event__section-title  event__section-title--destination">Destination</h3>
+        <p class="event__destination-description">${destination.description}</p>
+
+        <div class="event__photos-container">
+          <div class="event__photos-tape">
+            ${listDestinationPictures()}
+          </div>
+        </div>
+      </section>
+    `;
+  };
 
   const listControls = () => {
     if (mode === FORM_MODE.NEW) {
@@ -145,23 +178,8 @@ const createTripEventsFormTemplate = (tripEventData, mode, offerModel, destinati
 
       </header>
       <section class="event__details">
-        <section class="event__section  event__section--offers">
-          <h3 class="event__section-title  event__section-title--offers">Offers</h3>
-
-          <div class="event__available-offers">
-            ${listOffers()}
-        </section>
-
-        <section class="event__section  event__section--destination">
-          <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-          <p class="event__destination-description">${destination.description}</p>
-
-          <div class="event__photos-container">
-            <div class="event__photos-tape">
-              ${listDestinationPictures()}
-            </div>
-          </div>
-        </section>
+        ${offersSection()}
+        ${destinationSection()}
       </section>
     </form>
   `;
@@ -177,6 +195,8 @@ export default class TripEventsFormView extends AbstractStatefulView {
 
   #datepickerFrom = null;
   #datepickerTo = null;
+
+  #lastDestinationName = 'Chamonix';
 
   constructor(offerModel, destinationModel) {
     super();
@@ -237,11 +257,12 @@ export default class TripEventsFormView extends AbstractStatefulView {
           defaultDate: this._state.date_from,
           enableTime: true,
           'time_24hr': true,
-          onClose: ([dateFrom]) => {
+          onClose: ([dateFrom], _, instance) => {
             let newDate = dateFrom.toISOString();
-            if (newDate > this._state.date_to) {
+            if (newDate > this._state['date_to']) {
               alert('Дата начала не может быть позже даты окончания');
               newDate = this._state.date_from;
+              instance.open();
             }
             this.updateElement({
               'date_from': newDate,
@@ -258,11 +279,12 @@ export default class TripEventsFormView extends AbstractStatefulView {
           defaultDate: this._state.date_to,
           enableTime: true,
           'time_24hr': true,
-          onClose: ([dateTo]) => {
+          onClose: ([dateTo], _, instance) => {
             let newDate = dateTo.toISOString();
-            if (this._state.date_from > dateTo) {
+            if (this._state['date_from'] > newDate) {
               alert('Дата окончания не может быть раньше даты начала');
               newDate = this._state['date_to'];
+              instance.open();
             }
             this.updateElement({
               'date_to': newDate,
@@ -306,6 +328,14 @@ export default class TripEventsFormView extends AbstractStatefulView {
     this._setState(newState);
     this.element;
     this._restoreHandlers();
+
+  }
+
+  updateElement(update) {
+    super.updateElement(update);
+
+    const destination = this.#destinationModel.getDestinationById(this._state.destination);
+    this.#lastDestinationName = destination.name;
   }
 
   #setOffersUpdateHandler() {
@@ -343,8 +373,8 @@ export default class TripEventsFormView extends AbstractStatefulView {
       const newPrice = +evt.target.value;
       if (isNaN(newPrice)) {
         alert('Некорректная стоимость');
-      } else if (newPrice < 0) {
-        alert('Стоимость не может быть отрицательной');
+      } else if (newPrice <= 0) {
+        alert('Стоимость должна быть больше нуля');
       } else {
         this.updateElement({
           'base_price': newPrice,
@@ -389,6 +419,9 @@ export default class TripEventsFormView extends AbstractStatefulView {
       }
 
       // incorrect destination.name here...
+      alert(`Incorrect destination: ${evt.target.value}`);
+      evt.preventDefault();
+      evt.target.value = this.#lastDestinationName;
     });
   }
 
