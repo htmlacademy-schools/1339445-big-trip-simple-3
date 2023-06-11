@@ -1,6 +1,7 @@
 export const LIST_MODE = {
   DEFAULT: 'DEFAULT',
   EMPTY: 'EMPTY',
+  LOADING: 'LOADING',
 };
 
 export const FORM_MODE = {

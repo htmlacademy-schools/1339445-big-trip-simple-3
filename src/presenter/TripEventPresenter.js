@@ -7,6 +7,7 @@ import TripEventView from '../view/TripEventView';
 import { TRIP_MODEL_EVENT } from '../model/TripModel';
 import { OFFER_MODEL_EVENT } from '../model/OfferModel';
 import { DESTINATION_MODEL_EVENT } from '../model/DestinationModel';
+import UiBlocker from '../framework/ui-blocker/ui-blocker';
 
 export default class TripEventsPresenter {
   #container = null;
@@ -19,17 +20,21 @@ export default class TripEventsPresenter {
   #sortingView = null;
   #formView = null;
 
-  #listMode = null;
+  #listMode = LIST_MODE.LOADING;
   #sortingType = SORTING_BY.DAY;
 
   #activeTripEvent = null;
   #activeTripEventId = null;
+
+  #addTripEventButton = null;
 
   #initState = {
     tripModel: false,
     offerModel: false,
     destinationModel: false,
   };
+
+  #uiBlocker = new UiBlocker(300, 1500);
 
 
   init(container, tripModel, filterModel, offerModel, destinationModel) {
@@ -59,8 +64,8 @@ export default class TripEventsPresenter {
     this.#offerModel.addObserver(this.#onOfferModelCallback);
     this.#destinationModel.addObserver(this.#onDestinationModelCallback);
 
-    const addTripEventButton = document.querySelector('.trip-main__event-add-btn');
-    addTripEventButton.addEventListener('click', () => this.#addTripEventButtonClickHandler());
+    this.#addTripEventButton = document.querySelector('.trip-main__event-add-btn');
+    this.#addTripEventButton.addEventListener('click', () => this.#addTripEventButtonClickHandler());
   }
 
   #addTripEventButtonClickHandler() {
@@ -70,6 +75,7 @@ export default class TripEventsPresenter {
     this.#applyFormHandlers();
     render(this.#formView, this.#tripEventsList.element, RenderPosition.BEFOREBEGIN);
     this.#restoreSortingAndFilters();
+    this.#addTripEventButton.setAttribute('disabled', '');
   }
 
   #closeForm() {
@@ -83,10 +89,13 @@ export default class TripEventsPresenter {
         remove(this.#formView);
       }
     }
+    this.#addTripEventButton.removeAttribute('disabled');
   }
 
   _updateListMode(tripEventsDataArray) {
-    if (tripEventsDataArray.length === 0) {
+    if (!this.#isAllModelsInited()) {
+      this.#listMode = LIST_MODE.LOADING;
+    } else if (tripEventsDataArray.length === 0) {
       this.#listMode = LIST_MODE.EMPTY;
     } else {
       this.#listMode = LIST_MODE.DEFAULT;
@@ -111,7 +120,7 @@ export default class TripEventsPresenter {
         const tripEvent = this.#createNewTripEvent(tripEventData);
         this.#tripEventsList.append(tripEvent);
       }
-    } else if (this.#listMode === LIST_MODE.EMPTY) {
+    } else if (this.#listMode === LIST_MODE.EMPTY || this.#listMode === LIST_MODE.LOADING) {
       this.#tripEventsList.updateMessage();
     }
   }
@@ -133,6 +142,7 @@ export default class TripEventsPresenter {
       if (this.#isAllModelsInited()) {
         this.#recreateEventsList();
       }
+
     } else if (event === TRIP_MODEL_EVENT.REQUEST_SUCCESS) {
       const formStatus = this.#formView.status;
       // console.log(`status: ${ formStatus}`);
@@ -148,9 +158,13 @@ export default class TripEventsPresenter {
         this.#deleteActiveTripEvent();
       }
 
+      this.#uiBlocker.unblock();
+
     } else if (event === TRIP_MODEL_EVENT.REQUEST_ERROR) {
       this.#formView.unlock();
       this.#formView.shake();
+
+      this.#uiBlocker.unblock();
     }
   };
 
@@ -248,7 +262,7 @@ export default class TripEventsPresenter {
   addTripEvent(tripEventData) {
     // add new tripEvent to tripEventsList and show it
     this.#tripModel.addTrip(tripEventData);
-    if (this.#listMode.EMPTY) {
+    if (this.#listMode === LIST_MODE.EMPTY || this.#listMode === LIST_MODE.LOADING) {
       // now this.#listMode is not EMPTY, so we need to recreate list
       this.#recreateEventsList();
     }
@@ -274,24 +288,26 @@ export default class TripEventsPresenter {
   }
 
   #startDeletingActiveTripEvent() {
+    this.#uiBlocker.block();
     this.#formView.makeDeleting();
     this.#tripModel.removeTripById(this.#activeTripEventId);
   }
 
   #startUpdatingActiveTripEvent() {
+    this.#uiBlocker.block();
     this.#formView.makeSaving();
     const newTripEventData = this.#formView.getState();
     this.#tripModel.updateTrip(newTripEventData);
   }
 
   #updateActiveTripEvent() {
-    // console.log('updating complete');
     const newTripEventData = this.#formView.getState();
     this.#activeTripEvent.updateElement(newTripEventData);
     this.#closeForm();
   }
 
   #startAddingActiveTripEvent() {
+    this.#uiBlocker.block();
     this.#formView.makeSaving();
     const newTripEventData = this.#formView.getState();
     this.#tripModel.addTrip(newTripEventData);
