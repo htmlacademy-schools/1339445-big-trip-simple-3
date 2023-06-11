@@ -145,7 +145,6 @@ export default class TripEventsPresenter {
 
     } else if (event === TRIP_MODEL_EVENT.REQUEST_SUCCESS) {
       const formStatus = this.#formView.status;
-      // console.log(`status: ${ formStatus}`);
       this.#formView.unlock();
 
       if (formStatus === FORM_STATUS.SAVING) {
@@ -314,7 +313,6 @@ export default class TripEventsPresenter {
   }
 
   #addActiveTripEvent() {
-    // console.log('adding complete');
     this.#closeForm();
     this.#recreateEventsList();
   }
