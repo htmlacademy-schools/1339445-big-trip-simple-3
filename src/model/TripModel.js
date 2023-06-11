@@ -47,16 +47,17 @@ export default class TripEventsModel extends Observable {
       const result = await this.#tripApiService.deleteTripEventById(id);
       if (result.status !== STATUS.success) {
 
-        this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
+        this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR, result.data);
         return false;
       }
 
       this.#tripEvents.splice(i, 1);
-      this._notify(TRIP_MODEL_EVENT.REQUEST_SUCCESS);
+      this._notify(TRIP_MODEL_EVENT.REQUEST_SUCCESS, result.data);
       return true;
     }
-    this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
-    return false;
+    throw Error(`Incorrect trip id: ${id}`);
+    // this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
+    // return false;
   }
 
   getTripById(id) {
@@ -69,27 +70,28 @@ export default class TripEventsModel extends Observable {
     if (i !== -1) {
       const result = await this.#tripApiService.updateTripEvent(tripEventData);
       if (result.status !== STATUS.success) {
-        this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
+        this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR, result.data);
         return false;
       }
 
       this.#tripEvents[i] = {...this.#tripEvents[i], ...tripEventData};
-      this._notify(TRIP_MODEL_EVENT.REQUEST_SUCCESS);
+      this._notify(TRIP_MODEL_EVENT.REQUEST_SUCCESS, result.data);
       return true;
     }
-    this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
-    return false;
+    throw Error(`Incorrect trip id: ${tripEventData.id}`);
+    // this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
+    // return false;
   }
 
   async addTrip(tripEventData) {
     const result = await this.#tripApiService.addTripEvent(tripEventData);
     if (result.status !== STATUS.success) {
-      this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR);
+      this._notify(TRIP_MODEL_EVENT.REQUEST_ERROR, result.data);
       return false;
     }
 
-    this.#tripEvents.push(tripEventData);
-    this._notify(TRIP_MODEL_EVENT.REQUEST_SUCCESS);
+    this.#tripEvents.push(result.data);
+    this._notify(TRIP_MODEL_EVENT.REQUEST_SUCCESS, result.data);
     return true;
   }
 
